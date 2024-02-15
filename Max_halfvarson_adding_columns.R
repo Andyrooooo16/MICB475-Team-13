@@ -2,7 +2,7 @@
 library(tidyverse)
 
 # Loading in the dataset
-file_path <- "halfvarson_metadata.tsv"
+file_path <- "/Users/Max/Desktop/MICB475_group_project_personal/halfvarson_metadata.tsv"
 data <- read.delim(file_path, sep = "\t", header = TRUE)
 
 
@@ -69,7 +69,7 @@ count_yes_inflammation
 # depending on whether their cd_behaviour is classified as either B1, B2, B3
 
 mutated_calprotectin_data <- calprotectin_data %>%
-      mutate(inflammation = ifelse(calprotectin > 150, TRUE, FALSE)) %>% # Adds 'inflammation' column based on calprotectin level
+      mutate(inflammation = ifelse(as.integer(calprotectin) > 150, TRUE, FALSE)) %>% # Adds 'inflammation' column based on calprotectin level
       mutate(disease_severity = case_when(
           cd_behavior == "Non-stricturing, non-penetrating (B1)" ~ "Low",
           cd_behavior == "Stricturing (B2)" ~ "Medium",
