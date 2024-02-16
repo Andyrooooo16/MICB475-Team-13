@@ -24,8 +24,6 @@ print(unique(timepoint1_and_cd_resection_data$cd_resection))
 # write.table(timepoint1_and_cd_resection_data, file = "timepoint1_and_cd_resection_data.tsv", sep = "\t", row.names = FALSE)
 
 
-
-
 #calprotectin datset & stats
 
 calprotectin_data <- subset(timepoint1_and_cd_resection_data, !(calprotectin %in% c("not applicable", "not collected")))
@@ -74,8 +72,19 @@ mutated_calprotectin_data <- calprotectin_data %>%
           cd_behavior == "Non-stricturing, non-penetrating (B1)" ~ "Low",
           cd_behavior == "Stricturing (B2)" ~ "Medium",
           cd_behavior == "Penetrating (B3)" ~ "High"
-      )) # Adds 'disease_severity' column depending on score in 'cd_behavior'
+      )) # Adds 'disease_severity' column depending on score in 'cd_behavior') 
+# mutated_calprotectin_data
 
-mutated_calprotectin_data
+# Adds a column that determines whether the sample has inflammation and had a resection
+data_final <- mutated_calprotectin_data %>%
+      mutate(inflammation_with_surgery = case_when(
+        inflammation == TRUE & cd_resection == "yes" ~ TRUE,
+        TRUE ~ FALSE
+      ))
+# data_final 
 
+
+
+# Export the filtered dataset to a TSV file
+write.table(data_final, file = "halfvarson_metadata_wrangled.tsv", sep = "\t", row.names = FALSE)
 
