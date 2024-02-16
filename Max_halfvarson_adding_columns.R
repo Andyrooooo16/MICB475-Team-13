@@ -5,8 +5,6 @@ library(tidyverse)
 file_path <- "/Users/Max/Desktop/MICB475_group_project_personal/halfvarson_metadata.tsv"
 data <- read.delim(file_path, sep = "\t", header = TRUE)
 
-
-
 # Filter rows where the column "timepoint" contains the value 1
 # Subset the data to include only rows where timepoint equals 1
 timepoint1_data <- data[data$timepoint == 1, ]
@@ -20,12 +18,7 @@ timepoint1_and_cd_resection_data <- timepoint1_data[timepoint1_data$cd_resection
 # View the unique values of timepoint in timepoint1_and_cd_resection_data
 print(unique(timepoint1_and_cd_resection_data$cd_resection))
 
-# Export the filtered dataset to a TSV file
-# write.table(timepoint1_and_cd_resection_data, file = "timepoint1_and_cd_resection_data.tsv", sep = "\t", row.names = FALSE)
-
-
 #calprotectin datset & stats
-
 calprotectin_data <- subset(timepoint1_and_cd_resection_data, !(calprotectin %in% c("not applicable", "not collected")))
 
 
@@ -42,16 +35,19 @@ calprotectin_stats <- c(
 print(calprotectin_stats)
 
 
+# converts remaining calprotectin values to numerics
+calprotectin_data$calprotectin <- as.numeric(calprotectin_data$calprotectin)
+
 # Determine the number of rows that are below our inflammation cutoff (calprotectin <= 150)
 no_inflammation <- calprotectin_data %>%
-    filter(as.integer(calprotectin) <= 150) 
+    filter(calprotectin<= 150) 
 
 count_no_inflammation <- no_inflammation %>%
     nrow()
 
 # Determine the number of rows that are above our inflammation cutoff (calprotect > 150)
 yes_inflammation <- calprotectin_data %>%
-  filter(as.integer(calprotectin) > 150) 
+  filter(calprotectin > 150) 
 
 count_yes_inflammation <- yes_inflammation %>%
   nrow()
@@ -67,7 +63,7 @@ count_yes_inflammation
 # depending on whether their cd_behaviour is classified as either B1, B2, B3
 
 mutated_calprotectin_data <- calprotectin_data %>%
-      mutate(inflammation = ifelse(as.integer(calprotectin) > 150, TRUE, FALSE)) %>% # Adds 'inflammation' column based on calprotectin level
+      mutate(inflammation = ifelse(calprotectin > 150, TRUE, FALSE)) %>% # Adds 'inflammation' column based on calprotectin level
       mutate(disease_severity = case_when(
           cd_behavior == "Non-stricturing, non-penetrating (B1)" ~ "Low",
           cd_behavior == "Stricturing (B2)" ~ "Medium",
