@@ -74,8 +74,10 @@ mutated_calprotectin_data <- calprotectin_data %>%
 # Adds a column that determines whether the sample has inflammation and had a resection
 data_final <- mutated_calprotectin_data %>%
       mutate(inflammation_with_surgery = case_when(
-        inflammation == TRUE & cd_resection == "yes" ~ TRUE,
-        TRUE ~ FALSE
+        inflammation == TRUE & cd_resection == "yes" ~ "inflammation_with_surgery",
+        inflammation == TRUE & cd_resection == "no" ~ "inflammation_no_surgery",
+        inflammation == FALSE & cd_resection == "yes" ~ "no_inflammation_with_surgery",
+        TRUE ~ "no_inflammation_no_surgery"
       ))
 # data_final 
 
@@ -83,4 +85,3 @@ data_final <- mutated_calprotectin_data %>%
 
 # Export the filtered dataset to a TSV file
 write.table(data_final, file = "halfvarson_metadata_wrangled.tsv", sep = "\t", row.names = FALSE)
-
