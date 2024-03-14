@@ -16,7 +16,9 @@ ibd_surg <- subset_samples(ibd_RA, `cd_resection` == "yes")
                                   
 # Filter dataset by inflammation status
 ibd_noinf <- subset_samples(ibd_RA, `inflammation` == FALSE)
-ibd_inf <- subset_samples(ibd_RA, `inflammation` == TRUE)                             
+ibd_inf <- subset_samples(ibd_RA, `inflammation` == TRUE)     
+
+# Filter dataset by CD location!! Need to add code for this
 
 # Determine core ASVs in each group
 # May need to adjust detection and prevalence values later
