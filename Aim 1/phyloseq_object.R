@@ -65,25 +65,107 @@ sample_data(ibd)
 tax_table(ibd)
 phy_tree(ibd)
 
-rarecurve(t(as.data.frame(otu_table(ibd))), cex=0.1)
-ibd_rare <- rarefy_even_depth(ibd, rngseed = 1, sample.size = 124392)
+######### ANALYZE ##########
+# Remove non-bacterial sequences, if any
+ibd_filt <- subset_taxa(ibd,  Domain == "d__Bacteria" & Class!="c__Chloroplast" & Family !="f__Mitochondria")
+# Remove ASVs that have less than 5 counts total
+
+### INDICATOR SPECIES 
+
+library(indicspecies)
+
+#### Indicator Species/Taxa Analysis ####
+# glom to Genus
+ibd_genus <- tax_glom(ibd_filt, "Genus", NArm = TRUE)
+ibd_genus_RA <- transform_sample_counts(ibd_genus, fun=function(x) x/sum(x))
+
+#ISA
+isa_ibd <- multipatt(t(otu_table(ibd_genus_RA)), cluster = sample_data(ibd_genus_RA)$`inflammation_with_surgery`)
+summary(isa_ibd)
+taxtable <- tax_table(ibd) %>% as.data.frame() %>% rownames_to_column(var="ASV")
+
+# consider that your table is only going to be resolved up to the genus level, be wary of 
+# anything beyond the glomed taxa level
+isa_ibd$sign %>%
+  rownames_to_column(var="ASV") %>%
+  left_join(taxtable) %>%
+  filter(p.value<0.05) %>% View()
+
+View(sample_data(ibd_genus_RA))
+
+library(ggpubr)
+
+#################
+ibd_rare <- rarefy_even_depth(ibd_filt, rngseed = 1, sample.size = 124392)
+
+#### Alpha diversity ######
+plot_richness(ibd_rare) 
+
+plot_richness(ibd_rare, measures = c("Shannon","Chao1")) 
+
+gg_richness_inf_surg <- plot_richness(ibd_rare, x = "inflammation_with_surgery", measures = c("Shannon","Chao1")) +
+  xlab("Inflammation with Surgery") +
+  geom_boxplot()
+gg_richness_inf_surg
+
+gg_richness_dis_sev <- plot_richness(ibd_rare, x = "disease_severity", measures = c("Shannon","Chao1")) +
+  xlab("Disease Severity") +
+  geom_boxplot()
+gg_richness_dis_sev
+
+gg_richness_cd_loc <- plot_richness(ibd_rare, x = "cd_location", measures = c("Shannon","Chao1")) +
+  xlab("Crohn's Disease Location") +
+  geom_boxplot()
+gg_richness_cd_loc
+
+# phylogenetic diversity
+
+# calculate Faith's phylogenetic diversity as PD
+phylo_dist <- pd(t(otu_table(ibd_rare)), phy_tree(ibd_rare),
+                 include.root=F) 
+?pd
+
+# add PD to metadata table
+sample_data(ibd_rare)$PD <- phylo_dist$PD
+
+# plot any metadata category against the PD
+plot.pd <- ggplot(sample_data(ibd_rare), aes(inflammation_with_surgery, PD)) + 
+  geom_boxplot() +
+  xlab("Subject ID") +
+  ylab("Phylogenetic Diversity")
+
+# view plot
+plot.pd
+
 
 #### Beta diversity #####
-unifrac <- UniFrac(ibd_rare, weighted=FALSE, normalized=TRUE, parallel=FALSE, fast=TRUE)
-
+bc_dm <- distance(ibd_rare, method="bray")
 # check which methods you can specify
 ?distance
 
-pcoa_unifrac <- ordinate(ibd_rare, method="PCoA", distance=unifrac)
+pcoa_bc <- ordinate(ibd_rare, method="PCoA", distance=bc_dm)
 
-plot_ordination(ibd_rare, pcoa_unifrac, color = "days_post_transplant", shape="cage_id")
+# Calprotectin + Disease Severity
+plot_ordination(ibd_rare, pcoa_bc, color = "calprotectin", shape="disease_severity")
 
-gg_pcoa <- plot_ordination(ibd_rare, pcoa_unifrac, color = "days_post_transplant", shape="cage_id") +
-  scale_color_gradient(name = "Days after transplant", low = "yellow", high = "blue") +
-  labs(pch="Cage ID", col = "Days after transplant")
+gg_pcoa <- plot_ordination(ibd_rare, pcoa_bc, color = "calprotectin", shape="disease_severity")+
+  scale_color_gradient(name = "Calprotectin Levels", low = "orange", high = "blue") +
+  labs(pch="Disease Severity", col = "Calprotectin levels")
 gg_pcoa
 
-ggsave("plot_pcoa.png"
-       , gg_pcoa
-       , height=4, width=5)
+#### Taxonomy bar plots ####
+
+# Plot bar plot of taxonomy
+plot_bar(ibd_rare, fill="Phylum") 
+
+# Convert to relative abundance
+ibd_RA <- transform_sample_counts(ibd_rare, function(x) x/sum(x))
+
+# To remove black bars, "glom" by phylum first
+ibd_phylum <- tax_glom(ibd_RA, taxrank = "Phylum", NArm=FALSE)
+
+gg_taxa <- plot_bar(ibd_phylum, fill="Phylum") + 
+  facet_wrap(.~inflammation_with_surgery, scales = "free_x")
+gg_taxa
+
 
