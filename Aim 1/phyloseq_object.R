@@ -6,16 +6,16 @@ library(picante)
 
 #### Load data ####
 # Change file paths as necessary
-metafp <- "halfvarson_metadata_wrangled.tsv"
+metafp <- "../halfvarson_metadata_wrangled.tsv"
 meta <- read_delim(metafp, delim="\t")
 
-otufp <- "/Users/jamesforward/Desktop/MICB 475/475 project/IBD project/ibd_export/table_export/feature-table.txt"
+otufp <- "../ibd_export/table_export/feature-table.txt"
 otu <- read_delim(file = otufp, delim="\t", skip=1)
 
-taxfp <- "/Users/jamesforward/Desktop/MICB 475/475 project/IBD project/ibd_export/tax_export/taxonomy.tsv"
+taxfp <- "../ibd_export/tax_export/taxonomy.tsv"
 tax <- read_delim(taxfp, delim="\t")
 
-phylotreefp <- "/Users/jamesforward/Desktop/MICB 475/475 project/IBD project/ibd_export/tree_export/tree.nwk"
+phylotreefp <- "../ibd_export/tree_export/tree.nwk"
 phylotree <- read.tree(phylotreefp)
 
 #### Format OTU table ####
@@ -30,6 +30,19 @@ rownames(otu_mat) <- otu$`#OTU ID`
 # Use the "otu_table" function to make an OTU table
 OTU <- otu_table(otu_mat, taxa_are_rows = TRUE) 
 class(OTU)
+
+
+#### Adding column to metadata file that shows different cases of disease severity and inflammation ####
+meta_final <- meta %>%
+      mutate(disease_and_inflammation = case_when(
+          disease_severity == "Low" & inflammation == FALSE ~ "low_not_inflammed",
+          disease_severity == "Low" & inflammation == TRUE ~ "low_inflammed",
+          disease_severity == "Medium" & inflammation == FALSE ~ "medium_not_inflammed",
+          disease_severity == "Medium" & inflammation == TRUE ~ "low_inflammed",
+          disease_severity == "High" & inflammation == FALSE ~ "low_not_inflammed",
+          disease_severity == "High" & inflammation == TRUE ~ "low_inflammed",
+      ))
+
 
 #### Format sample metadata ####
 # Save everything except sampleid as new data frame
@@ -69,6 +82,7 @@ phy_tree(ibd)
 # Remove non-bacterial sequences, if any
 ibd_filt <- subset_taxa(ibd,  Domain == "d__Bacteria" & Class!="c__Chloroplast" & Family !="f__Mitochondria")
 # Remove ASVs that have less than 5 counts total
+ibd_filt <- prune_samples(sample_sums(ibd_filt)>105, ibd_filt)
 
 ### INDICATOR SPECIES 
 
