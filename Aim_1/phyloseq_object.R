@@ -312,5 +312,22 @@ isa_ibd_table <- isa_ibd$sign %>%
 # Write the table to a CSV file
 write.csv(isa_ibd_table, "isa_ibd_table.csv", row.names = FALSE)
 
+isa_ibd_table_filt <- isa_ibd_table %>%
+  filter(stat > 0.87)
 
+ibd_RA_melt <- psmelt(ibd_RA)
+
+summary_by_otu_mean <- ibd_RA_melt %>%
+  group_by(OTU) %>%
+  summarize(
+    mean_abundance = mean(Abundance, na.rm = TRUE)
+  )
+
+summary_by_otu_mean <- summary_by_otu_mean %>%
+  rename(ASV = OTU)
+
+filtered_unique_asv <- summary_by_otu_mean %>%
+  filter(ASV %in% unique(isa_ibd_table_filt$ASV))
+
+unique_asv_RA_isa <- inner_join(filtered_unique_asv, isa_ibd_table_filt, by = "ASV")
 
