@@ -106,6 +106,8 @@ ibd_filt <- subset_taxa(ibd,  Domain == "d__Bacteria" & Class!="c__Chloroplast" 
 # Remove samples with less than 100 reads
 ibd_filt <- prune_samples(sample_sums(ibd_filt)>105, ibd_filt)
 
+save(ibd_filt, file = "ibd_filt.RData")
+
 #################
 ibd_rare <- rarefy_even_depth(ibd_filt, rngseed = 1, sample.size = 124392)
 
