@@ -310,6 +310,7 @@ isa_ibd_table <- isa_ibd$sign %>%
   filter(p.value < 0.05)
 
 # Write the table to a CSV file
+
 write.csv(isa_ibd_table, "isa_ibd_table.csv", row.names = FALSE)
 
 isa_ibd_table_filt <- isa_ibd_table %>%
@@ -318,7 +319,7 @@ isa_ibd_table_filt <- isa_ibd_table %>%
 ibd_RA_melt <- psmelt(ibd_RA)
 
 summary_by_otu_mean <- ibd_RA_melt %>%
-  group_by(OTU) %>%
+  group_by(OTU, inflammation_with_surgery) %>%
   summarize(
     mean_abundance = mean(Abundance, na.rm = TRUE)
   )
@@ -329,5 +330,8 @@ summary_by_otu_mean <- summary_by_otu_mean %>%
 filtered_unique_asv <- summary_by_otu_mean %>%
   filter(ASV %in% unique(isa_ibd_table_filt$ASV))
 
-unique_asv_RA_isa <- inner_join(filtered_unique_asv, isa_ibd_table_filt, by = "ASV")
+ggplot(filtered_unique_asv, aes(x = inflammation_with_surgery, y = ASV)) + 
+  geom_point(aes(size = mean_abundance, fill = ASV), alpha = 0.75, shape = 21) + 
+  scale_size_continuous(limits = c(0.000001, 0.1), range = c(1,17), breaks = c(1,10,50,75)) + 
+  labs( x= "", y = "", size = "Relative Abundance (%)", fill = "")
 
