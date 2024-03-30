@@ -1,4 +1,4 @@
-file_path <- "C:/Users/andre/Downloads/halfvarson_metadata.tsv"
+file_path <- "../halfvarson_metadata.tsv"
 data <- read.table(file_path, sep = "\t", header = TRUE)
 
 
