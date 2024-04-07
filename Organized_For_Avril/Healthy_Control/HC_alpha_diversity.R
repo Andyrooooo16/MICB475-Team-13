@@ -37,6 +37,12 @@ custom_theme <- theme_minimal() +
 # Set the custom theme as the default theme for all ggplot2 plots
 theme_set(custom_theme)
 
+
+
+
+
+
+
 #### Alpha diversity ####
 plot_richness(ibd_rare) 
 
