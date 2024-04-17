@@ -3,6 +3,7 @@ Repository for MICB 475 Group Project
 
 
 ## Weekly Meeting Agenda
-[2024/02/08 - Meeting 1](https://github.com/Andyrooooo16/MICB475-Team-13/blob/main/Meeting%20Agendas/2024-02-8-Meeting-1.md)
+[Agendas](https://github.com/Andyrooooo16/MICB475-Team-13/tree/main/Meeting%20Agendas)
 
-[2024/02/15 - Meeting 2](https://github.com/Andyrooooo16/MICB475-Team-13/blob/main/Meeting%20Agendas/2024-02-15-Meeting-2.md)
+## Weekly Meeting Notes
+[Notes](https://github.com/Andyrooooo16/MICB475-Team-13/tree/main/Meeting%20Agendas/Meeting%20Minutes)
