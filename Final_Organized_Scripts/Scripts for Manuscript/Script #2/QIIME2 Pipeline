@@ -1,0 +1,102 @@
+### The following script includes all the entire QIIME2 pipeline performed
+### Order: Demultiplexing (Input: Raw Sequences), Denoising/Clustering (Input: 
+### Demultiplexed sequences), Taxonomy Classification (Input: Representative sequences), 
+### Alignment (Input: Representative sequences), Phylogeny (Input: Aligned Sequences)
+
+
+
+
+
+### Demultiplexing and importing the filtered manifest file
+
+qiime tools import \
+  --type "SampleData[SequencesWithQuality]" \
+  --input-format SingleEndFastqManifestPhred33V2 \
+  --input-path filtered_halfvarson_manifest.tsv \
+  --output-path ./demux_seqs.qza
+
+
+qiime demux summarize \
+  --i-data demux_seqs.qza \
+  --o-visualization demux_seqs.qzv
+
+
+# Denoising with DADA2
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs demux_seqs.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 99 \
+  --o-representative-sequences rep-seqs.qza \
+  --o-table table.qza \
+  --o-denoising-stats stats.qza
+
+scp ./halfvarson_metadata_wrangled.tsv root@10.19.139.178:/data/project
+
+qiime feature-table summarize \
+  --i-table table.qza \
+  --o-visualization table.qzv \
+  --m-sample-metadata-file hc_halfvarson_metadata_wrangled_new.tsv
+
+ qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs.qzv
+
+
+### Training the classifier
+### Trunc length definied in denoising step
+
+qiime feature-classifier extract-reads \
+  --i-sequences /mnt/datasets/silva_ref_files/silva-138-99-seqs.qza \
+  --p-f-primer GTGCCAGCMGCCGCGGTAA \
+  --p-r-primer GGACTACHVGGGTWTCTAAT \
+  --p-trunc-len 99 \
+  --o-reads ref-seqs-trimmed.qza
+
+ qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads ref-seqs-trimmed.qza \
+  --i-reference-taxonomy /mnt/datasets/silva_ref_files/silva-138-99-tax.qza \
+  --o-classifier classifier.qza
+
+### Using the trained classifier to assign taxonomy to reads (rep-seqs.qza)
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+qiime metadata tabulate \
+	--m-input-file taxonomy.qza \
+	--o-visualization taxonomy.qzv
+
+ qiime taxa filter-table \
+  --i-table table.qza \
+  --i-taxonomy taxonomy.qza \
+  --p-exclude mitochondria,chloroplast \
+  --o-filtered-table table-filtered.qza
+
+
+ qiime feature-table summarize \
+  --i-table table-filtered.qza \
+  --o-visualization table-filtered.qzv \
+  --m-sample-metadata-file hc_halfvarson_metadata_wrangled_new.tsv 
+
+
+### MAFFT & FastTree2
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza 
+
+
+### Alpha-rarefaction
+
+qiime diversity alpha-rarefaction \
+  --i-table table-filtered.qza \
+  --i-phylogeny rooted-tree.qza \
+  --p-max-depth 925000 \
+  --m-metadata-file hc_halfvarson_metadata_wrangled_new.tsv \
+  --o-visualization alpha-rarefaction.qzv
+
